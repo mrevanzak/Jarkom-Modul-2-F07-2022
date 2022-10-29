@@ -121,6 +121,7 @@ apt-get update
 ```
 
 Selanjutnya bisa dicoba `ping google.com` di setiap nodenya untuk mengetes apakah sudah terkoneksi ke internet
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198839367-60515c7a-abed-4955-8957-18adf6aac524.png">
 
 ## Nomer 2
 Untuk mempermudah mendapatkan informasi mengenai misi dari Handler, bantulah Loid membuat website utama dengan akses wise.yyy.com dengan alias www.wise.yyy.com pada folder wise
@@ -173,6 +174,7 @@ nameserver 10.32.2.2 #IP WISE
 #ping ke wise.F07.com
 ping wise.F07.com -c 3
 ```
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198839493-57da6649-e3ee-40f0-9ebf-adfc3af626c9.png">
 
 ## Nomer 3
 Setelah itu ia juga ingin membuat subdomain eden.wise.yyy.com dengan alias www.eden.wise.yyy.com yang diatur DNS-nya di WISE dan mengarah ke Eden
@@ -215,6 +217,7 @@ ping eden.wise.F07.com -c 3
 #ping ke alias subdomain eden
 ping www.eden.wise.F07.com -c 3
 ```
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198839581-b5c0a4e0-5601-42aa-adcc-22a38f35979a.png">
 
 ## Nomer 4
 Buat juga reverse domain untuk domain utama
@@ -272,9 +275,27 @@ nameserver 10.32.2.2 #IP WISE
 #cek host
 host -t PTR 10.32.2.2
 ```
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198839698-25aab5c6-8aa7-4a8b-812f-e8b32d4220cf.png">
 
 ## Nomer 5
 Agar dapat tetap dihubungi jika server WISE bermasalah, buatlah juga Berlint sebagai DNS Slave untuk domain utama
+
+> Dalam terminal Berlint
+```
+#update lalu install bind
+apt-get update
+apt-get install bind9 -y
+#buat zone
+echo '
+zone "wise.F07.com" {
+    type slave;
+    masters { 10.32.2.2; }; #IP WISE
+    file "/var/lib/bind/wise.F07.com";
+};
+' > /etc/bind/named.conf.local
+#restart bind
+service bind9 restart
+```
 
 > Dalam terminal WISE
 ```
@@ -295,36 +316,27 @@ zone "2.32.10.in-addr.arpa" {
 ' > /etc/bind/named.conf.local
 #restart bind
 service bind9 restart
-```
-
-> Dalam terminal Berlint
-```
-#update lalu install bind
-apt-get update
-apt-get install bind9 -y
-#buat zone
-echo '
-zone "wise.F07.com" {
-    type slave;
-    masters { 10.32.2.2; }; #IP WISE
-    file "/var/lib/bind/wise.F07.com";
-};
-' > /etc/bind/named.conf.local
-#restart bind
-service bind9 restart
+#stop bind
+service bind9 stop
 ```
 
 Untuk mengetest hasilnya
 > Dalam terminal SSS & Garden
 ```
-#tambah nameserver ke IP Berlint
+#ubah nameserver ke IP Berlint
 echo '
-nameserver 10.32.2.2 #IP WISE
+#nameserver 10.32.2.2 #IP WISE
 nameserver 10.32.3.2 #IP Berlint
 ' > /etc/resolv.conf
 #ping ke wise.F07.com
 ping wise.F07.com -c 3
+#ubah nameserver ke IP Berlint
+echo '
+nameserver 10.32.2.2 #IP WISE
+#nameserver 10.32.3.2 #IP Berlint
+' > /etc/resolv.conf
 ```
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198840035-9206884d-6921-4c02-9133-e213fb90dff4.png">
 
 ## Nomer 6
 Karena banyak informasi dari Handler, buatlah subdomain yang khusus untuk operation yaitu operation.wise.yyy.com dengan alias www.operation.wise.yyy.com yang didelegasikan dari WISE ke Berlint dengan IP menuju ke Eden dalam folder operation
@@ -436,36 +448,63 @@ Untuk mengetest hasilnya
     #ping ke alias operation
     ping www.operation.wise.F07.com -c 3
 ```
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198840035-9206884d-6921-4c02-9133-e213fb90dff4.png">
+
 
 ## Nomer 7
 Untuk informasi yang lebih spesifik mengenai Operation Strix, buatlah subdomain melalui Berlint dengan akses strix.operation.wise.yyy.com dengan alias www.strix.operation.wise.yyy.com yang mengarah ke Eden 
 
 > Dalam terminal Berlint
 ```
-#tambah delegasi subdomain pada config wise.F07.com
+#tambah cname subdomain pada config wise.F07.com
 echo '
 ;
 ; BIND data file for local loopback interface
 ;
 $TTL    604800
 @               IN      SOA     wise.F07.com. root.wise.F07.com. (
-		2022102401         ; Serial
-		    604800         ; Refresh
-		    86400         ; Retry
-		    2419200         ; Expire
-		    604800 )       ; Negative Cache TTL
+                     2022102401         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
 ;
-@                       IN      NS      wise.F07.com.
-@                       IN      A       10.32.3.3       ; IP Eden
-www                     IN      CNAME   wise.F07.com.   ; alias wise
-eden                    IN      A       10.32.3.3       ; subdomain IP Eden
-www.eden                IN      CNAME   eden            ; alias eden
-ns1                     IN      A       10.32.3.2       ; IP Berlint
-operation               IN      NS      ns1
-www.operation           IN      CNAME   operation
+@               IN      NS      wise.F07.com.
+@               IN      A       10.32.3.3       ; IP Eden
+www             IN      CNAME   wise.F07.com.   ; alias wise
+eden            IN      A       10.32.3.3       ; subdomain IP Eden
+www.eden        IN      CNAME   eden            ; alias eden
+ns1             IN      A       10.32.3.2       ; IP Berlint
+operation       IN      NS      ns1
+www.operation   IN      CNAME   operation
 www.strix.operation     IN      CNAME   operation
-@                       IN      AAAA    ::1
+@               IN      AAAA    ::1
 ' > /etc/bind/wise/wise.F07.com
+#restart bind
+service bind9 restart
+```
+> Dalam terminal Berlint
+
+```
+#config subdomain strix pada operation.wise.F07.com
+echo '
+;
+; BIND data file for local loopback interface
+;
+$TTL    604800
+@               IN      SOA     operation.wise.F07.com. root.operation.wise.F07.com. (
+                     2022102403         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
+;
+@               IN      NS      operation.wise.F07.com.
+@               IN      A       10.32.3.3       ; IP Eden
+www             IN      CNAME   operation.wise.F07.com.
+strix           IN      A       10.32.3.3       ; Subdomain IP Eden
+www.strix       IN      CNAME   strix           ; alias
+' > /etc/bind/operation/operation.wise.F07.com
 #restart bind
 service bind9 restart
 ```
@@ -478,6 +517,7 @@ ping strix.operation.wise.F07.com -c 3
 #ping ke alias subdomain strix pada operation
 ping www.strix.operation.wise.F07.com -c 3
 ```
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198840436-62cbcee6-54d1-4f03-93c1-0d654090f0e6.png">
 
 ## Nomer 8
 Setelah melakukan konfigurasi server, maka dilakukan konfigurasi Webserver. Pertama dengan webserver www.wise.yyy.com. Pertama, Loid membutuhkan webserver dengan DocumentRoot pada /var/www/wise.yyy.com
@@ -553,6 +593,7 @@ nameserver 10.32.3.2 #IP Berlint
 #buka eden di lynx
 lynx http://www.wise.F07.com
 ```
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198840612-d19d28d4-633f-4359-941b-633d21f1d59c.png">
 
 ## Nomer 9
 Setelah itu, Loid juga membutuhkan agar url www.wise.yyy.com/index.php/home dapat menjadi menjadi www.wise.yyy.com/home
@@ -595,6 +636,7 @@ Untuk mengetest hasilnya
 ```
 lynx www.wise.F07.com/home
 ```
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198840688-049018b8-7f04-495b-be67-2552fb254c3f.png">
 
 ## Nomer 10
 Setelah itu, pada subdomain www.eden.wise.yyy.com, Loid membutuhkan penyimpanan aset yang memiliki DocumentRoot pada /var/www/eden.wise.yyy.com
@@ -639,6 +681,7 @@ Untuk mengetest hasilnya
 ```
 lynx eden.wise.F07.com
 ```
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198840741-79a69171-5afd-4e16-a25f-0c5e1b26ebcf.png">
 
 ## Nomer 11
 Akan tetapi, pada folder /public, Loid ingin hanya dapat melakukan directory listing saja
@@ -680,6 +723,7 @@ Untuk mengetest hasilnya
 ```
 lynx eden.wise.F07.com/public
 ```
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198840796-afd784a4-57a4-466a-b3a4-fa87ea92a070.png">
 
 ## Nomer 12
 Tidak hanya itu, Loid juga ingin menyiapkan error file 404.html pada folder /error untuk mengganti error kode pada apache
@@ -723,6 +767,7 @@ Untuk mengetest hasilnya
 ```
 lynx eden.wise.F07.com/public/mengcapek
 ```
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198840835-85830432-b7c3-439a-b842-58739d5c7dc6.png">
 
 ## Nomer 13
 Loid juga meminta Franky untuk dibuatkan konfigurasi virtual host. Virtual host ini bertujuan untuk dapat mengakses file asset www.eden.wise.yyy.com/public/js menjadi www.eden.wise.yyy.com/js 
@@ -768,6 +813,7 @@ Untuk mengetest hasilnya
 ```
 lynx eden.wise.F07.com/js
 ```
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198840872-bc81ec7e-505c-499d-a9e4-78fb15ec1d07.png">
 
 ## Nomer 14
 Loid meminta agar www.strix.operation.wise.yyy.com hanya bisa diakses dengan port 15000 dan port 15500
@@ -828,6 +874,7 @@ Untuk mengetest hasilnya
 ```
 lynx www.strix.operation.wise.F07.com:15000
 ```
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198840934-5eb7c844-cb42-408e-8237-9904e11fe5fe.png">
 
 ## Nomer 15
 dengan autentikasi username Twilight dan password opStrix dan file di /var/www/strix.operation.wise.yyy
@@ -871,6 +918,7 @@ Untuk mengetest hasilnya
 ```
 lynx www.strix.operation.wise.F07.com:15000
 ```
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198840973-b64ea9d3-e003-48a0-ac29-52f88e725ce9.png">
 
 ## Nomer 16
 dan setiap kali mengakses IP Eden akan dialihkan secara otomatis ke www.wise.yyy.com
@@ -906,6 +954,7 @@ Untuk mengetest hasilnya
 ```
 lynx 10.32.3.3
 ```
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198841021-4d071b2e-0961-4e45-a705-f1e5ed448451.png">
 
 ## Nomer 17
 arena website www.eden.wise.yyy.com semakin banyak pengunjung dan banyak modifikasi sehingga banyak gambar-gambar yang random, maka Loid ingin mengubah request gambar yang memiliki substring “eden” akan diarahkan menuju eden.png. Bantulah Agent Twilight dan Organisasi WISE menjaga perdamaian! 
@@ -962,6 +1011,8 @@ Untuk mengetest hasilnya
 #testing
 lynx eden.wise.F07.com/public/images/edenedenee.png
 ```
+
+<img width="606" alt="image" src="https://user-images.githubusercontent.com/60770478/198841075-24d973af-4dc5-4505-8823-ddd6b08741bc.png">
 
 ## Kendala
 s u s a h
