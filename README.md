@@ -331,13 +331,7 @@ Karena banyak informasi dari Handler, buatlah subdomain yang khusus untuk operat
 
 > Dalam terminal WISE
 ```
-#tambah delegasi subdomain pada config wise.F07.com
-echo '
-;
-; BIND data file for local loopback interface
-;
-$TTL    604800
-@               IN      SOA     wise.F07.com. root.wise.F07.com. (
+IN      SOA     wise.F07.com. root.wise.F07.com. (
 		2022102401         ; Serial
 		    604800         ; Refresh
 		    86400         ; Retry
@@ -352,7 +346,6 @@ www.eden                IN      CNAME   eden            ; alias eden
 ns1                     IN      A       10.32.3.2       ; IP Berlint
 operation               IN      NS      ns1
 www.operation           IN      CNAME   operation
-www.strix.operation     IN      CNAME   operation
 @                       IN      AAAA    ::1
 ' > /etc/bind/wise/wise.F07.com
 #edit /etc/bind/named.conf.options
@@ -449,25 +442,30 @@ Untuk informasi yang lebih spesifik mengenai Operation Strix, buatlah subdomain 
 
 > Dalam terminal Berlint
 ```
-#config subdomain strix pada operation.wise.F07.com
+#tambah delegasi subdomain pada config wise.F07.com
 echo '
 ;
 ; BIND data file for local loopback interface
 ;
 $TTL    604800
-@               IN      SOA     operation.wise.F07.com. root.operation.wise.F07.com. (
-		2022102403         ; Serial
+@               IN      SOA     wise.F07.com. root.wise.F07.com. (
+		2022102401         ; Serial
 		    604800         ; Refresh
 		    86400         ; Retry
 		    2419200         ; Expire
 		    604800 )       ; Negative Cache TTL
 ;
-@               IN      NS      operation.wise.F07.com.
-@               IN      A       10.32.3.3       ; IP Eden
-www             IN      CNAME   operation.wise.F07.com.
-strix           IN      A       10.32.3.3       ; Subdomain IP Eden
-www.strix       IN      CNAME   strix           ; alias
-' > /etc/bind/operation/operation.wise.F07.com
+@                       IN      NS      wise.F07.com.
+@                       IN      A       10.32.3.3       ; IP Eden
+www                     IN      CNAME   wise.F07.com.   ; alias wise
+eden                    IN      A       10.32.3.3       ; subdomain IP Eden
+www.eden                IN      CNAME   eden            ; alias eden
+ns1                     IN      A       10.32.3.2       ; IP Berlint
+operation               IN      NS      ns1
+www.operation           IN      CNAME   operation
+www.strix.operation     IN      CNAME   operation
+@                       IN      AAAA    ::1
+' > /etc/bind/wise/wise.F07.com
 #restart bind
 service bind9 restart
 ```
