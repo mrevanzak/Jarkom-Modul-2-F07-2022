@@ -352,7 +352,6 @@ www.eden                IN      CNAME   eden            ; alias eden
 ns1                     IN      A       10.32.3.2       ; IP Berlint
 operation               IN      NS      ns1
 www.operation           IN      CNAME   operation
-www.strix.operation     IN      CNAME   operation
 @                       IN      AAAA    ::1
 ' > /etc/bind/wise/wise.F07.com
 #edit /etc/bind/named.conf.options
@@ -446,6 +445,33 @@ Untuk mengetest hasilnya
 
 ## Nomer 7
 Untuk informasi yang lebih spesifik mengenai Operation Strix, buatlah subdomain melalui Berlint dengan akses strix.operation.wise.yyy.com dengan alias www.strix.operation.wise.yyy.com yang mengarah ke Eden 
+> Dalam terminal WISE
+```
+#tambah delegasi subdomain pada config wise.F07.com
+echo '
+;
+; BIND data file for local loopback interface
+;
+$TTL    604800
+@               IN      SOA     wise.F07.com. root.wise.F07.com. (
+		2022102401         ; Serial
+		    604800         ; Refresh
+		    86400         ; Retry
+		    2419200         ; Expire
+		    604800 )       ; Negative Cache TTL
+;
+@                       IN      NS      wise.F07.com.
+@                       IN      A       10.32.3.3       ; IP Eden
+www                     IN      CNAME   wise.F07.com.   ; alias wise
+eden                    IN      A       10.32.3.3       ; subdomain IP Eden
+www.eden                IN      CNAME   eden            ; alias eden
+ns1                     IN      A       10.32.3.2       ; IP Berlint
+operation               IN      NS      ns1
+www.operation           IN      CNAME   operation
+www.strix.operation     IN      CNAME   operation
+@                       IN      AAAA    ::1
+' > /etc/bind/wise/wise.F07.com
+```
 
 > Dalam terminal Berlint
 ```
